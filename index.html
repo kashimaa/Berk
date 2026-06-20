@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        /* Make the map fill the entire page container */
         html, body, #map {
             width: 100%;
             height: 100%;
@@ -16,20 +15,17 @@
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
-        /* Simple, clean info label on the map */
         .map-title {
             padding: 8px 12px;
             font-size: 14px;
             font-weight: bold;
-            background: white;
             background: rgba(255,255,255,0.9);
             box-shadow: 0 0 15px rgba(0,0,0,0.2);
             border-radius: 5px;
             color: #333;
         }
-        /* Custom popup styling for readability */
         .leaflet-popup-content {
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.4;
         }
     </style>
@@ -41,15 +37,13 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script>
-        // 1. Initialize the map focused directly over Berkeley
         const map = L.map('map').setView([37.8717, -122.2728], 13);
 
-        // Add a clean light basemap
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         }).addTo(map);
 
-        // 2. Mapping of Berkeley Districts to their current Council Members
+        // Roster mapped to the exact string matches found in your "title" properties
         const councilRoster = {
             "District 1": "Rashi Kesarwani",
             "District 2": "Terry Taplin",
@@ -61,43 +55,38 @@
             "District 8": "Mark Humbert"
         };
 
-        // 3. Style function: Highlights District 1 with a purple outline
+        // Style function: Matches the exact string "District 1" from the title property
         function styleDistrict(feature) {
-            const districtName = feature.properties && feature.properties.name;
-            
-            // Check if this feature is District 1
-            const isDistrict1 = districtName === "District 1" || (feature.properties && feature.properties.number === 1);
+            const districtTitle = feature.properties && feature.properties.title;
+            const isDistrict1 = (districtTitle === "District 1");
 
             return {
-                color: isDistrict1 ? "#800080" : "#3388ff", // Purple for D1, default Leaflet blue for others
-                weight: isDistrict1 ? 3.5 : 2,             // Slightly thicker border for D1
+                color: isDistrict1 ? "#800080" : "#3388ff", // Clean purple outline for District 1
+                weight: isDistrict1 ? 4 : 2,                // Slightly heavier border for D1
                 opacity: 0.8,
-                fillColor: isDistrict1 ? "#bc8f8f" : "#3388ff", 
-                fillOpacity: 0.15
+                fillColor: isDistrict1 ? "#800080" : "#3388ff", 
+                fillOpacity: isDistrict1 ? 0.25 : 0.1       // Enhanced tint for District 1
             };
         }
 
-        // 4. Interaction function: Shows District Name and Council Member on click
+        // Interaction function: Binds the popups cleanly using the title property
         function onEachFeature(feature, layer) {
-            if (feature.properties && feature.properties.name) {
-                const districtName = feature.properties.name;
-                const memberName = councilRoster[districtName] || "Vacant / Unknown";
+            if (feature.properties && feature.properties.title) {
+                const districtTitle = feature.properties.title;
+                const memberName = councilRoster[districtTitle] || "Vacant / Unknown";
                 
                 const popupContent = `
-                    <strong>${districtName}</strong><br/>
+                    <strong>${districtTitle}</strong><br/>
                     <span style="color: #555;">Councilmember: ${memberName}</span>
                 `;
-                
                 layer.bindPopup(popupContent);
             }
         }
 
-        // 5. Fetch and load your CouncilDistricts.json file locally
+        // Fetch and load your GeoJSON file
         fetch('CouncilDistricts.json')
             .then(response => {
-                if (!response.ok) {
-                    throw new Error("Could not find or read CouncilDistricts.json. Make sure it is in the same folder.");
-                }
+                if (!response.ok) throw new Error("Could not read CouncilDistricts.json");
                 return response.json();
             })
             .then(geojsonData => {
@@ -107,11 +96,9 @@
                 }).addTo(map);
             })
             .catch(error => {
-                console.error("Error loading the map data:", error);
-                alert("Map Loading Error: Look at your browser console tools or verify that CouncilDistricts.json is sitting right next to this index.html file.");
+                console.error("Error loading map data:", error);
             });
 
-        // 6. Simple title card overlay
         const titleControl = L.control({position: 'topright'});
         titleControl.onAdd = function () {
             const div = L.DomUtil.create('div', 'map-title');
