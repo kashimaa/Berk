@@ -27,54 +27,68 @@
             border-radius: 5px;
             color: #333;
         }
+        /* Custom popup styling for readability */
+        .leaflet-popup-content {
+            font-size: 13px;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
 
-    <div id="map"></div>
+    <div id=\"map\"></div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src=\"https://unpkg.com/leaflet@1.9.4/dist/leaflet.js\"></script>
 
     <script>
         // 1. Initialize the map focused directly over Berkeley
         const map = L.map('map').setView([37.8717, -122.2728], 13);
 
-        // 2. Add a clean, minimal map background (Positron flavor shows labels cleanly under borders)
+        // Add a clean light basemap
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
+            attribution: '&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors &copy; <a href=\"https://carto.com/attributions\">CARTO</a>'
         }).addTo(map);
 
-        // 3. Define the styling rules for the layers
+        // 2. Mapping of Berkeley Districts to their current Council Members
+        const councilRoster = {
+            "District 1": "Rashi Kesarwani",
+            "District 2": "Terry Taplin",
+            "District 3": "Ben Bartlett",
+            "District 4": "Igor Tregub",
+            "District 5": "Shoshana O'Keefe",
+            "District 6": "Brent Blackaby",
+            "District 7": "Cecilia Lunaparra",
+            "District 8": "Mark Humbert"
+        };
+
+        // 3. Style function: Highlights District 1 with a purple outline
         function styleDistrict(feature) {
-            const name = feature.properties.name || "";
+            const districtName = feature.properties && feature.properties.name;
             
-            // Check if this specific feature is District 1
-            if (name === "District 1" || name === "1") {
-                return {
-                    color: "#0056b3",      /* Extra unique, vibrant royal blue outline */
-                    weight: 4,             /* Thicker border to make it pop */
-                    opacity: 1.0,
-                    fillColor: "#0078D4",  /* Clean blue highlight fill */
-                    fillOpacity: 0.15      /* Light opacity so base streets remain crisp */
-                };
-            }
-            
-            // Standard crisp styling for all other districts
+            // Check if this feature is District 1
+            const isDistrict1 = districtName === "District 1" || (feature.properties && feature.properties.number === 1);
+
             return {
-                color: "#4A4A4A",          /* Distinct dark charcoal outline */
-                weight: 1.5,               /* Cleaner, thinner lines for non-target boundaries */
+                color: isDistrict1 ? "#800080" : "#3388ff", // Purple for D1, default Leaflet blue for others
+                weight: isDistrict1 ? 3.5 : 2,             // Slightly thicker border for D1
                 opacity: 0.8,
-                fillColor: "#000000",
-                fillOpacity: 0.0           /* Completely transparent fills to eliminate clutter */
+                fillColor: isDistrict1 ? "#bc8f8f" : "#3388ff", 
+                fillOpacity: 0.15
             };
         }
 
-        // 4. Interaction handling: show a clean popup when clicking a district
+        // 4. Interaction function: Shows District Name and Council Member on click
         function onEachFeature(feature, layer) {
             if (feature.properties && feature.properties.name) {
-                layer.bindPopup("<strong>" + feature.properties.name + "</strong>");
+                const districtName = feature.properties.name;
+                const memberName = councilRoster[districtName] || "Vacant / Unknown";
+                
+                const popupContent = `
+                    <strong>${districtName}</strong><br/>
+                    <span style="color: #555;">Councilmember: ${memberName}</span>
+                `;
+                
+                layer.bindPopup(popupContent);
             }
         }
 
